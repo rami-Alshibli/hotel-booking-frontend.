@@ -33,10 +33,8 @@ export default function ReservationFilters({
           className="w-full border border-gray-300 rounded-lg p-2 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
         >
           <option value="ALL">All Statuses</option>
-          <option value="Confirmed">Confirmed</option>
+          <option value="Confirmed">Active (Confirmed)</option>
           <option value="Cancelled">Cancelled</option>
-          <option value="CheckedIn">CheckedIn</option>
-          <option value="CheckedOut">CheckedOut</option>
         </select>
       </div>
     </div>
