@@ -1,7 +1,7 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
-import RoomsPage from "./pages/RoomPage";
+import RoomPage from "./pages/RoomPage";
 import ReservationsPage from "./pages/ReservationsPage";
 
 export default function App() {
@@ -11,8 +11,11 @@ export default function App() {
         <Navbar />
         <main className="max-w-7xl mx-auto p-6">
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/rooms" element={<RoomsPage />} />
+            {/* يوجه المستخدم فوراً إلى صفحة الغرف أول ما يفتح الموقع */}
+            <Route path="/" element={<Navigate to="/rooms" replace />} />
+            
+            <Route path="/rooms" element={<RoomPage />} />
+            <Route path="/book" element={<HomePage />} />
             <Route path="/reservations" element={<ReservationsPage />} />
           </Routes>
         </main>

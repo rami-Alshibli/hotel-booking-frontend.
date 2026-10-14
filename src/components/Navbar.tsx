@@ -15,20 +15,20 @@ export default function Navbar() {
     <nav className="bg-white shadow-sm border-b sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         {/* Brand / Logo */}
-        <div className="flex items-center gap-2 text-blue-600 font-bold text-xl">
+        <Link to="/rooms" className="flex items-center gap-2 text-blue-600 font-bold text-xl">
           <Hotel className="w-7 h-7" />
           <span>Hotel Booking</span>
-        </div>
+        </Link>
 
         {/* Navigation Links */}
         <div className="flex items-center gap-2">
-          <Link to="/" className={linkClass("/")}>
-            <CalendarCheck className="w-5 h-5" />
-            <span>Search & Book</span>
-          </Link>
           <Link to="/rooms" className={linkClass("/rooms")}>
             <BedDouble className="w-5 h-5" />
             <span>Manage Rooms</span>
+          </Link>
+          <Link to="/book" className={linkClass("/book")}>
+            <CalendarCheck className="w-5 h-5" />
+            <span>Search & Book</span>
           </Link>
           <Link to="/reservations" className={linkClass("/reservations")}>
             <Hotel className="w-5 h-5" />
