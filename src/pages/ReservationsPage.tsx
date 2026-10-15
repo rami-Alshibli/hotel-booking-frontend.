@@ -12,7 +12,6 @@ import Pagination from "../components/common/Pagination";
 export default function ReservationsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // قراءة page و limit من الرابط (أو وضع قيم افتراضية page=1 و limit=5)
   const page = Math.max(1, Number(searchParams.get("page")) || 1);
   const limit = Math.max(1, Number(searchParams.get("limit")) || 5);
 
@@ -27,23 +26,45 @@ export default function ReservationsPage() {
   const [cancelTargetId, setCancelTargetId] = useState<string | null>(null);
   const [cancelLoading, setCancelLoading] = useState<boolean>(false);
 
+  // تحويل page و limit أيضاً إلى start و end احتياطاً إذا كان الباك إند يستخدمهما
+  const start = (page - 1) * limit;
+  const end = start + limit;
+
   const fetchReservations = async () => {
     setLoading(true);
     setError("");
     try {
-      // إرسال page و limit للباك إند
       const res = await apiRequest<any>(
-        `/reservations?page=${page}&limit=${limit}`
+        `/reservations?page=${page}&limit=${limit}&start=${start}&end=${end}`
       );
+
       const list =
-        res.data || res.reservations || (Array.isArray(res) ? res : []);
+        res.data ||
+        res.reservations ||
+        res.items ||
+        res.results ||
+        (Array.isArray(res) ? res : []);
+
       setReservations(list);
 
-      // إذا كان الباك إند يرجع totalPages أو total، نستخدمه
-      if (res.totalPages) {
-        setTotalPagesFromServer(res.totalPages);
-      } else if (res.total || res.count) {
-        setTotalPagesFromServer(Math.ceil((res.total || res.count) / limit));
+      // استخراج إجمالي الصفحات أو إجمالي العناصر مهما كانت تسميته في الباك إند
+      const serverTotalPages =
+        res.totalPages ??
+        res.pages ??
+        res.pagination?.totalPages ??
+        res.meta?.totalPages;
+
+      const serverTotalItems =
+        res.total ??
+        res.totalCount ??
+        res.totalReservations ??
+        res.pagination?.total ??
+        res.meta?.total;
+
+      if (typeof serverTotalPages === "number") {
+        setTotalPagesFromServer(serverTotalPages);
+      } else if (typeof serverTotalItems === "number") {
+        setTotalPagesFromServer(Math.max(1, Math.ceil(serverTotalItems / limit)));
       } else {
         setTotalPagesFromServer(null);
       }
@@ -76,12 +97,10 @@ export default function ReservationsPage() {
     }
   };
 
-  // تحديث رقم الصفحة في الرابط
   const handlePageChange = (newPage: number) => {
     setSearchParams({ page: String(newPage), limit: String(limit) });
   };
 
-  // تحديث عدد العناصر في الرابط وإرجاع المستخدم للصفحة 1
   const handleLimitChange = (newLimit: number) => {
     setSearchParams({ page: "1", limit: String(newLimit) });
   };
@@ -96,15 +115,21 @@ export default function ReservationsPage() {
     return matchesPhone && matchesStatus;
   });
 
-  // في حال كان الباك إند يرجع كل الحجوزات دفعة واحدة، نقسمها أيضاً في الفرونت إند لضمان عمل الرابط بكل الأحوال
-  const isClientPaginated = totalPagesFromServer === null || filteredReservations.length > limit;
-  const totalPages = isClientPaginated
-    ? Math.max(1, Math.ceil(filteredReservations.length / limit))
-    : totalPagesFromServer || 1;
+  // إذا رجع السيرفر عناصر أكثر من الـ limit فهذا يعني أنه لم يقسمها، فنقسمها نحن في الفرونت إند
+  const isUnpaginatedFromBackend = filteredReservations.length > limit;
 
-  const displayedReservations = isClientPaginated
+  const displayedReservations = isUnpaginatedFromBackend
     ? filteredReservations.slice((page - 1) * limit, page * limit)
     : filteredReservations;
+
+  // حساب إجمالي الصفحات بدقة
+  const totalPages = isUnpaginatedFromBackend
+    ? Math.max(1, Math.ceil(filteredReservations.length / limit))
+    : totalPagesFromServer !== null
+    ? totalPagesFromServer
+    : reservations.length === limit
+    ? page + 1
+    : page;
 
   return (
     <div className="space-y-6">
@@ -141,7 +166,6 @@ export default function ReservationsPage() {
         onCancel={(id) => setCancelTargetId(id)}
       />
 
-      {/* شريط التحكم بالصفحات المرتبط بالرابط */}
       <Pagination
         currentPage={page}
         totalPages={totalPages}
